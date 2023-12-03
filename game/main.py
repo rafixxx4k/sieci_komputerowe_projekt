@@ -1,11 +1,12 @@
+import socket
 import pygame
 import sys
 from constants import WHITE, GRAY, DARK_GRAY, BLACK, WINDOW_WIDTH, LOGIN_WINDOW_WIDTH, WINDOW_HEIGHT, LOGIN_WINDOW_HEIGHT, FONT_SIZE
-from login_ui_elements import draw_login_screen
 from login_logic import LoginLogic
+from game_logic import GameLogic
 
 
-def login_window():
+def login_window(client_socket):
     # Inicjalizacja Pygame
     pygame.init()
     # Ustawienia okna
@@ -13,10 +14,9 @@ def login_window():
     pygame.display.set_caption("Login to Game")
 
     clock = pygame.time.Clock()
-    loginLogic = LoginLogic()
+    loginLogic = LoginLogic(client_socket)
     while True:
         screen.fill(GRAY)
-
         # Obsługa zdarzeń
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -29,37 +29,45 @@ def login_window():
         loginLogic.draw_login_screen(screen)
         pygame.display.flip()
         clock.tick(30)
-        if loginLogic.get_logged():
-            break
+        if loginLogic.get_logged() > 0:
+            return loginLogic.get_logged()
 
 
-def game_window():
+def game_window(client_socket, me):
     pygame.init()
 
-    screen = pygame.display.set_mode((800, 600))
+    screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
     pygame.display.set_caption("Game Window")
 
     clock = pygame.time.Clock()
-
-    running = True
-    while running:
+    gameLogic = GameLogic(me, client_socket)
+    while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                running = False
-
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                gameLogic.mouse_handler(event)
         screen.fill(WHITE)
+        gameLogic.draw_game_seen(screen)
         # Tutaj dodaj logikę dla nowego okna gry
 
         pygame.display.flip()
         clock.tick(30)
 
-    pygame.quit()
-
 
 def main():
-    global username, room_number, active_input
-    login_window()
-    # game_window()
+
+    try:
+        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client_socket.connect(('localhost', 1100))
+        me = 1
+        # me = login_window(client_socket)
+        game_window(client_socket, me)
+
+        client_socket.close()
+    except Exception as e:
+        print(f"Błąd podczas połączenia z serwerem: {e}")
 
 
 if __name__ == "__main__":

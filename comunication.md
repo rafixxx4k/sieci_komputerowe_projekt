@@ -5,20 +5,22 @@ Ten plik zawiera sposób komunikacji client - server podczas gry w prawo dżungl
 ## komunikacja client -> server:
 
 1. logowanie się do gry {32 bity}
-   - numer pokoju [6 bity]
+   - numer pokoju [4 bity]
    - nazwa [14 bitów] (w przypadku krótszej nazwy reszta spacji)
 2. wzięcie totemu {1 bit}
    - wysłanie pojedynczego znaku 't' [1 bit]
 3. odsłonięcie swojej karty {1 bit}
-   - jeden znak 'k' [1 bit]
+   - jeden znak 'c' [1 bit]
 
 ## komunikacja server -> client:
 
-1. stan gry {260 bitów}
+1. odpowiedź servera na logowanie {1 bit}
+   - 0 jeśli nastąpił błąd (pokój jest pełen)
+   - 1-8 pozycja gracza na planszy
+2. stan gry {260 bitów}
    - bit wyniku gry [1 bit]
      - 0 - przegrana
-     - 1 - gra nadal trwa
-     - 2 - wygrana
+     - 1-8 - wygrał dany gracz
    - ilość graczy liczba od 1-8 [1 bit]
    - kogo ruch liczba od 0-7 [1 bit]
    - komunikat [1 bit]

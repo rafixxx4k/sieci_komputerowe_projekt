@@ -4,28 +4,26 @@ from constants import WHITE, DARK_GRAY, BLACK, FONT_SIZE
 
 
 class LoginLogic:
-    def __init__(self):
-        self.logged = False
+    def __init__(self, client_socket):
+        self.me = 0
         self.username = ""
         self.room_number = ""
         self.active_input = "username"
         self.font = pygame.font.Font(None, FONT_SIZE)
+        self.client_socket = client_socket
 
     def send_credential(self):
         if len(self.username) > 0 and len(self.room_number) == 4:
             print(f'user: {self.username}, room: {self.room_number}')
-            try:
-                client_socket = socket.socket(
-                    socket.AF_INET, socket.SOCK_STREAM)
-                client_socket.connect(('localhost', 1100))
-                message = f"{self.room_number:04}{self.username:<14}"
-                client_socket.send(message.encode())
-                print(client_socket.recv(1024))
-                client_socket.close()
-                self.logged = True
-                print("Dane wysłane do serwera.")
-            except Exception as e:
-                print(f"Błąd podczas połączenia z serwerem: {e}")
+            message = f"{self.room_number:04}{self.username:<14}"
+            self.client_socket.send(message.encode())
+            rec = self.client_socket.recv(1024)
+            if int(rec.decode()) > 0:
+                self.me = int(rec.decode())
+            else:
+                print("Pokój do którego chcesz dołączyć jest pełen.")
+
+            print(rec)
         else:
             print("Niepoprawne dane. Wprowadź poprawne dane.")
 
@@ -60,7 +58,6 @@ class LoginLogic:
         return self.active_input
 
     def draw_text(self, surface, text, x, y):
-
         text_surface = self.font.render(text, True, BLACK)
         surface.blit(text_surface, (x, y))
 
@@ -91,4 +88,4 @@ class LoginLogic:
         return self.username, self.room_number, self.active_input
 
     def get_logged(self):
-        return self.logged
+        return self.me
