@@ -4,26 +4,26 @@ Ten plik zawiera sposób komunikacji client - server podczas gry w prawo dżungl
 
 ## komunikacja client -> server:
 
-1. logowanie się do gry {32 bity}
-   - numer pokoju [4 bity]
+1. logowanie się do gry {18 bajty}
+   - numer pokoju [4 bajty]
    - nazwa [14 bitów] (w przypadku krótszej nazwy reszta spacji)
-2. wzięcie totemu {1 bit}
-   - wysłanie pojedynczego znaku 't' [1 bit]
-3. odsłonięcie swojej karty {1 bit}
-   - jeden znak 'c' [1 bit]
+2. wzięcie totemu {1 bajtów}
+   - wysłanie pojedynczego znaku 't' [1 bajtów]
+3. odsłonięcie swojej karty {1 bajtów}
+   - jeden znak 'c' [1 bajtów]
 
 ## komunikacja server -> client:
 
-1. odpowiedź servera na logowanie {1 bit}
+1. odpowiedź servera na logowanie {1 bajtów}
    - 0 jeśli nastąpił błąd (pokój jest pełen)
    - 1-8 pozycja gracza na planszy
-2. stan gry {260 bitów}
-   - bit wyniku gry [1 bit]
-     - 0 - przegrana
-     - 1-8 - wygrał dany gracz
-   - ilość graczy liczba od 1-8 [1 bit]
-   - kogo ruch liczba od 0-7 [1 bit]
-   - komunikat [1 bit]
+2. stan gry {260 bajtówów}
+   - bajtów wyniku gry [1 bajtów]
+     - 0 - gra w toku
+     - 1-7 - wygrał dany gracz
+   - ilość graczy liczba od 1-7 [1 bajtów]
+   - kogo ruch liczba od 0-7 [1 bajtów]
+   - komunikat [1 bajtów]
      - 0 - brak komunikatu
      - 1 - udało się wyrwać totem
      - 2 - ktoś wyrwał ci totem
@@ -31,7 +31,7 @@ Ten plik zawiera sposób komunikacji client - server podczas gry w prawo dżungl
 
 dla każdego gracza (8 razy)
 
-- nazwa gracza [26 bitów] (dopełnione spacjami)
-- liczba kart zakrytych [2 bity]
-- liczba kart odkrytych [2 bity]
-- numer karty na wierzchu [2 bity]
+- nazwa gracza [26 bajtówów] (dopełnione spacjami)
+- liczba kart zakrytych [2 bajty]
+- liczba kart odkrytych [2 bajty]
+- numer karty na wierzchu [2 bajty]
