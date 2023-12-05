@@ -9,16 +9,17 @@ game_rooms = {}
 NUMBER_OF_CARDS = 19
 
 
-class GameState:
-    def __init__(self, winner, number_of_players, who_to_move, message, list_of_players):
-        self.winner = winner
-        self.number_of_players = number_of_players
-        self.who_to_move = who_to_move
-        self.message = message
-        self.players = list_of_players
-
-
 def handle_login(data, client_socket):
+    """
+    Handles the login process for a player.
+
+    Args:
+        data (bytes): The login data received from the client.
+        client_socket (socket): The client socket object.
+
+    Returns:
+        tuple: The room number and the player object.
+    """
     room_number = int(data[:4].decode().strip())
     player_name = data[4:18].decode().strip()
     player = Player(player_name, 12, 1, random.randint(
@@ -27,6 +28,16 @@ def handle_login(data, client_socket):
 
 
 def handle_room(room_number, player):
+    """
+    Handles the player joining a room.
+
+    Args:
+        room_number (int): The room number.
+        player (Player): The player object.
+
+    Returns:
+        bool: True if the player successfully joins the room, False otherwise.
+    """
     if room_number not in game_rooms:
         game_rooms[room_number] = GameState(0, 0, 1, 0, [])
     # if room is full sends 0 to client
@@ -72,13 +83,30 @@ def handle_client(client_socket):
 
 
 def broadcast_game_state(game_state):
+    """
+    Broadcasts the game state to all players in the room.
+
+    Args:
+        game_state (GameState): The game state object.
+
+    Returns:
+        None
+    """
     game_state_bytes = convert_game_state_to_bytes(game_state)
-    print(game_state_bytes)
     for player in game_state.players:
         player.socket.send(game_state_bytes)
 
 
 def convert_game_state_to_bytes(game_state):
+    """
+    Converts the game state object to bytes.
+
+    Args:
+        game_state (GameState): The game state object.
+
+    Returns:
+        bytes: The game state object encoded as bytes.
+    """
     result_byte = f'{game_state.winner}'
     result_byte += f'{game_state.number_of_players}'
     result_byte += f'{game_state.who_to_move}'
@@ -89,6 +117,16 @@ def convert_game_state_to_bytes(game_state):
 
 
 def new_card(game_state, player):
+    """
+    Handles the process of a player receiving a new card.
+
+    Args:
+        game_state (GameState): The game state object.
+        player (Player): The player object.
+
+    Returns:
+        None
+    """
     # if there is no card in hand take all cards from table
     if player.cards_on_hand == 0:
         player.cards_on_hand = player.cards_on_table
@@ -102,8 +140,17 @@ def new_card(game_state, player):
 
 
 def take_totem(game_state, player, player_it):
-    print(player)
-    print(player_it)
+    """
+    Handles the process of a player taking the totem.
+
+    Args:
+        game_state (GameState): The game state object.
+        player (Player): The player object.
+        player_it (int): The index of the player in the game state.
+
+    Returns:
+        None
+    """
     players_with_same_card = [
         p for p in game_state.players if p.card_face_up//5 == player.card_face_up//5]
     if len(players_with_same_card) == 1:
@@ -127,6 +174,12 @@ def take_totem(game_state, player, player_it):
 
 
 def start_server():
+    """
+    Starts the game server.
+
+    Returns:
+        None
+    """
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind(('localhost', 1100))
     server.listen(5)

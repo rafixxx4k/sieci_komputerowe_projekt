@@ -1,95 +1,12 @@
 import threading
 from threading import Semaphore
+from Player import Player
+from GameState import GameState
+from Cards import Cards
 from constants import WINDOW_WIDTH, FONT_SIZE_SMALL, BLACK, UPDATE_SEMAPHORE
 import pygame
 import os
 import socket
-
-
-class Player:
-    """
-    Represents a player in the game.
-
-    Attributes:
-        name (str): The name of the player.
-        cards_on_hand (int): The number of cards the player has on hand.
-        cards_on_table (int): The number of cards the player has on the table.
-        card_face_up (int): The number of the card that is face up.
-    """
-
-    def __init__(self):
-        self.name = ""
-        self.cards_on_hand = 0
-        self.cards_on_table = 0
-        self.card_face_up = 0
-
-
-class GameState:
-    """
-    Represents the state of the game.
-
-    Attributes:
-        winner (str): The winner of the game.
-        number_of_players (int): The number of players in the game.
-        who_to_move (str): The player who is currently making a move.
-        message (str): A message to display to the players.
-        players (list): A list of Player objects representing the players in the game.
-    """
-
-    def __init__(self, winner, number_of_players, who_to_move, message):
-        self.winner = winner
-        self.number_of_players = number_of_players
-        self.who_to_move = who_to_move
-        self.message = message
-        self.players = [Player() for _ in range(number_of_players)]
-
-
-class Cards:
-    """
-    A class representing a deck of cards in a game.
-
-    Attributes:
-    - deck: A list representing the cards in the deck.
-    - deck_sprite: A list representing the sprites of the cards in the deck.
-    - totem: An image representing the totem card.
-    - totem_sprite: A sprite representing the totem card.
-    """
-
-    def __init__(self):
-        self.deck = []
-        self.deck_sprite = []
-
-    def image_load(self):
-        """
-        Loads the images for the game and initializes the sprite objects.
-
-        This method loads the card images and the totem image from the "img" directory.
-        It creates sprite objects for each card image and the totem image, and stores them in the respective lists.
-
-        Args:
-            self: The GameLogic object.
-
-        Returns:
-            None
-        """
-        for i in range(1, 5):
-            for x in ["c", "f", "n", "p", "z"]:
-                file_path = os.path.join("img", f"{i}{x}.png")
-                texture = pygame.image.load(file_path)
-                self.deck.append(texture)
-
-        file_path = os.path.join("img", "totem.png")
-        self.totem = pygame.image.load(file_path)
-
-        for texture in self.deck:
-            sprite = pygame.sprite.Sprite()
-            sprite.image = texture
-            sprite.rect = sprite.image.get_rect()
-            self.deck_sprite.append(sprite)
-
-        self.totem_sprite = pygame.sprite.Sprite()
-        self.totem_sprite.image = self.totem
-        self.totem_sprite.rect = sprite.image.get_rect()
 
 
 class GameLogic:
@@ -121,7 +38,7 @@ class GameLogic:
         [6, 5, 4, 3, 0, 1, 2],
     ]
 
-    def __init__(self, me, client_socket):
+    def __init__(self, me, client_socket: socket.socket):
         """
         Initializes a new instance of the GameLogic class.
 
@@ -135,7 +52,6 @@ class GameLogic:
         self.cards.image_load()
         self.font = pygame.font.Font(None, FONT_SIZE_SMALL)
         rec = self.client_socket.recv(1024)
-        print(rec)
         self.make_game_state(rec.decode())
         self.listen_thread = threading.Thread(target=self.listen_for_updates)
         self.listen_thread.daemon = True
@@ -154,7 +70,6 @@ class GameLogic:
                 # Acquire the semaphore to update the game state
                 UPDATE_SEMAPHORE.acquire()
                 # Update the game state
-                print("listen for updates semaphore down")
                 self.make_game_state(data.decode())
                 # Release the semaphore to signal the main thread
                 UPDATE_SEMAPHORE.release()
@@ -184,8 +99,6 @@ class GameLogic:
                 state[index+16:index+18])
             self.gameState.players[i].card_face_up = int(
                 state[index+18:index+20])
-        for key, value in vars(self.gameState).items():
-            print(f"{key}: {value}")
 
     def mouse_handler(self, event):
         """
