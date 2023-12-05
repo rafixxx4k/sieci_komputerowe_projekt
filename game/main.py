@@ -62,7 +62,7 @@ def main():
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client_socket.connect(('localhost', 1100))
         me = 1
-        # me = login_window(client_socket)
+        me = login_window(client_socket)
         game_window(client_socket, me)
 
         client_socket.close()

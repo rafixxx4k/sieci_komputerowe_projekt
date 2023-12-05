@@ -18,8 +18,9 @@ class LoginLogic:
             message = f"{self.room_number:04}{self.username:<14}"
             self.client_socket.send(message.encode())
             rec = self.client_socket.recv(1024)
-            if int(rec.decode()) > 0:
-                self.me = int(rec.decode())
+            rec = int.from_bytes(rec, 'big')
+            if rec > 0:
+                self.me = rec
             else:
                 print("Pokój do którego chcesz dołączyć jest pełen.")
 

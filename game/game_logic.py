@@ -127,7 +127,7 @@ class GameLogic:
             self.client_socket.send("t".encode())
         elif 200 <= event.pos[0] <= 600 and 400 <= event.pos[1] < 600:
             if self.gameState.who_to_move == self.me:
-                self.client_socket.send("c")
+                self.client_socket.send("c".encode())
             else:
                 print("it is not your turn")
         # Release the semaphore after updating the game state
@@ -157,6 +157,9 @@ class GameLogic:
                 screen, f'{persons_name}: {persons_hand}/{persons_table}', x-30, y+108)
             sprite.rect.topleft = (x, y)
             screen.blit(sprite.image, sprite.rect)
+        # if player is to move draw green frame around his cards
+        if self.gameState.who_to_move == self.me:
+            pygame.draw.rect(screen, (0, 255, 0), (300, 400, 200, 200), 5)
 
         # Release the semaphore after updating the game state
         UPDATE_SEMAPHORE.release()
