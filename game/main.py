@@ -7,9 +7,16 @@ from game_logic import GameLogic
 
 
 def login_window(client_socket):
-    # Inicjalizacja Pygame
+    """
+    Displays the login window and handles user input for login.
+
+    Args:
+        client_socket (socket.socket): The client socket for communication with the server.
+
+    Returns:
+        int: The player ID after successful login.
+    """
     pygame.init()
-    # Ustawienia okna
     screen = pygame.display.set_mode((LOGIN_WINDOW_WIDTH, LOGIN_WINDOW_HEIGHT))
     pygame.display.set_caption("Login to Game")
 
@@ -17,7 +24,6 @@ def login_window(client_socket):
     loginLogic = LoginLogic(client_socket)
     while True:
         screen.fill(GRAY)
-        # Obsługa zdarzeń
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -34,6 +40,16 @@ def login_window(client_socket):
 
 
 def game_window(client_socket, me):
+    """
+    Displays the game window and handles user input for gameplay.
+
+    Args:
+        client_socket (socket.socket): The client socket for communication with the server.
+        me (int): The player ID.
+
+    Returns:
+        None
+    """
     pygame.init()
 
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -50,14 +66,17 @@ def game_window(client_socket, me):
                 gameLogic.mouse_handler(event)
         screen.fill(WHITE)
         gameLogic.draw_game_seen(screen)
-        # Tutaj dodaj logikę dla nowego okna gry
-
         pygame.display.flip()
         clock.tick(30)
 
 
 def main():
+    """
+    The main function that initializes the client socket, handles login and starts the game.
 
+    Returns:
+        None
+    """
     try:
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client_socket.connect(('localhost', 1100))

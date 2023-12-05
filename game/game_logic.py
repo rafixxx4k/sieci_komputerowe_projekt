@@ -7,6 +7,16 @@ import socket
 
 
 class Player:
+    """
+    Represents a player in the game.
+
+    Attributes:
+        name (str): The name of the player.
+        cards_on_hand (int): The number of cards the player has on hand.
+        cards_on_table (int): The number of cards the player has on the table.
+        card_face_up (int): The number of the card that is face up.
+    """
+
     def __init__(self):
         self.name = ""
         self.cards_on_hand = 0
@@ -15,6 +25,17 @@ class Player:
 
 
 class GameState:
+    """
+    Represents the state of the game.
+
+    Attributes:
+        winner (str): The winner of the game.
+        number_of_players (int): The number of players in the game.
+        who_to_move (str): The player who is currently making a move.
+        message (str): A message to display to the players.
+        players (list): A list of Player objects representing the players in the game.
+    """
+
     def __init__(self, winner, number_of_players, who_to_move, message):
         self.winner = winner
         self.number_of_players = number_of_players
@@ -24,11 +45,33 @@ class GameState:
 
 
 class Cards:
+    """
+    A class representing a deck of cards in a game.
+
+    Attributes:
+    - deck: A list representing the cards in the deck.
+    - deck_sprite: A list representing the sprites of the cards in the deck.
+    - totem: An image representing the totem card.
+    - totem_sprite: A sprite representing the totem card.
+    """
+
     def __init__(self):
         self.deck = []
         self.deck_sprite = []
 
     def image_load(self):
+        """
+        Loads the images for the game and initializes the sprite objects.
+
+        This method loads the card images and the totem image from the "img" directory.
+        It creates sprite objects for each card image and the totem image, and stores them in the respective lists.
+
+        Args:
+            self: The GameLogic object.
+
+        Returns:
+            None
+        """
         for i in range(1, 5):
             for x in ["c", "f", "n", "p", "z"]:
                 file_path = os.path.join("img", f"{i}{x}.png")
@@ -50,6 +93,14 @@ class Cards:
 
 
 class GameLogic:
+    """
+    Represents the game logic for the multiplayer game.
+
+    Attributes:
+        positions (list): A list of dictionaries representing the positions of the game objects.
+        board_type (list): A list of lists representing the board type.
+    """
+
     positions = [
         {"image": (50, 50)},
         {"image": (50, 200)},
@@ -71,6 +122,13 @@ class GameLogic:
     ]
 
     def __init__(self, me, client_socket):
+        """
+        Initializes a new instance of the GameLogic class.
+
+        Args:
+            me (int): The player's identifier.
+            client_socket (socket): The client socket for communication with the server.
+        """
         self.me = me
         self.client_socket = client_socket
         self.cards = Cards()
@@ -84,6 +142,9 @@ class GameLogic:
         self.listen_thread.start()
 
     def listen_for_updates(self):
+        """
+        Listens for updates from the server and updates the game state accordingly.
+        """
         try:
             while True:
                 # Listen for data from the server
@@ -102,6 +163,12 @@ class GameLogic:
             print(f"Error in listen_for_updates: {e}")
 
     def make_game_state(self, state):
+        """
+        Parses the game state received from the server and updates the game state.
+
+        Args:
+            state (str): The game state received from the server.
+        """
         winner = int(state[0])
         number_of_players = int(state[1])
         who_to_move = int(state[2])
@@ -121,6 +188,12 @@ class GameLogic:
             print(f"{key}: {value}")
 
     def mouse_handler(self, event):
+        """
+        Handles the mouse events and updates the game state accordingly.
+
+        Args:
+            event (pygame.event.Event): The mouse event.
+        """
         # Acquire the semaphore before updating the game state
         UPDATE_SEMAPHORE.acquire()
         if 200 <= event.pos[0] <= 600 and 50 <= event.pos[1] < 400:
@@ -134,17 +207,32 @@ class GameLogic:
         UPDATE_SEMAPHORE.release()
 
     def draw_text(self, surface, text, x, y):
+        """
+        Draws text on the given surface at the specified position.
+
+        Args:
+            surface (pygame.Surface): The surface to draw on.
+            text (str): The text to draw.
+            x (int): The x-coordinate of the position.
+            y (int): The y-coordinate of the position.
+        """
         text_surface = self.font.render(text, True, BLACK)
         surface.blit(text_surface, (x, y))
 
     def draw_game_seen(self, screen):
+        """
+        Draws the game state on the screen.
+
+        Args:
+            screen (pygame.Surface): The screen surface to draw on.
+        """
         # Acquire the semaphore before updating the game state
         UPDATE_SEMAPHORE.acquire()
         # draw totem
         sprite = self.cards.totem_sprite
         sprite.rect.topleft = (300, 100)
         screen.blit(sprite.image, sprite.rect)
-        # draw players cards
+        # draw players and cards
         for i, j in enumerate(self.board_type[self.gameState.number_of_players]):
             person = (self.me - 1 + i) % self.gameState.number_of_players
             persons_name = self.gameState.players[person].name
