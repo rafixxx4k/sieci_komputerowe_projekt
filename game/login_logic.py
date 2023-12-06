@@ -50,7 +50,7 @@ class LoginLogic:
             print(f'user: {self.username}, room: {self.room_number}')
             message = f"{self.room_number:04}{self.username:<14}"
             self.client_socket.send(message.encode())
-            rec = self.client_socket.recv(1024)
+            rec = self.client_socket.recv(1)
             rec = int(rec.decode())
             if rec > 0:
                 self.me = rec
@@ -112,9 +112,9 @@ class LoginLogic:
         to the server. Otherwise, the active input field remains unchanged.
         """
         if 50 <= event.pos[0] <= 350 and 50 <= event.pos[1] < 150:
-            return "username"
+            self.active_input = "username"
         elif 50 <= event.pos[0] <= 350 and 150 <= event.pos[1] < 230:
-            return "room_number"
+            self.active_input = "room_number"
         elif 250 <= event.pos[0] <= 340 and 230 <= event.pos[1] <= 265:
             self.send_credential()
         return self.active_input
