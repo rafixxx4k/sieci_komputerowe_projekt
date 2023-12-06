@@ -89,7 +89,7 @@ class GameLogic:
         who_to_move = int(state[2])
         message = int(state[3])
         self.gameState = GameState(
-            winner, number_of_players, who_to_move, message)
+            winner, number_of_players, who_to_move, message, [Player() for _ in range(number_of_players)])
         for i in range(number_of_players):
             index = 4 + i*20
             self.gameState.players[i].name = state[index:index+14]
@@ -161,6 +161,14 @@ class GameLogic:
         # if player is to move draw green frame around his cards
         if self.gameState.who_to_move == self.me:
             pygame.draw.rect(screen, (0, 255, 0), (300, 400, 200, 200), 5)
+        # else draw yellow frame around person to move
+        else:
+            position = (self.gameState.who_to_move - self.me +
+                        self.gameState.number_of_players) % self.gameState.number_of_players
+            x, y = self.positions[self.board_type[self.gameState.number_of_players]
+                                  [position]]["image"]
+            x, y = x-50, y-50
+            pygame.draw.rect(screen, (255, 255, 0), (x, y, 200, 200), 5)
 
         # Release the semaphore after updating the game state
         UPDATE_SEMAPHORE.release()
