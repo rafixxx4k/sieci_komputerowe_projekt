@@ -68,6 +68,7 @@ def handle_client(client_socket):
             return
         # if room is not full sends player id to client
         player_id = game_rooms[room_number].number_of_players
+        print(f"Player_id: {str(player_id).encode()}, player: {player.name}")
         player.socket.send(str(player_id).encode())
         broadcast_game_state(game_rooms[room_number])
         while True:
@@ -94,6 +95,7 @@ def broadcast_game_state(game_state):
     """
     game_state_bytes = convert_game_state_to_bytes(game_state)
     for player in game_state.players:
+        print(f"Sending to player: {player.name}")
         player.socket.send(game_state_bytes)
 
 
