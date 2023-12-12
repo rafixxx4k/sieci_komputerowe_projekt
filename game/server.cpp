@@ -7,6 +7,8 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <unordered_map>
+#include <sstream>
+#include <iomanip>
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -54,85 +56,132 @@ public:
         : winner(w), number_of_players(num), who_to_move(move), players(p) {}
 };
 
-// // Dictionary to store game state for each room
-// std::unordered_map<int, GameState> game_rooms;
+// Dictionary to store game state for each room
+std::unordered_map<int, GameState> game_rooms;
 
-// // Function to handle login
-// std::pair<int, Player> handle_login(const char *data, int client_socket)
-// {
-//     int room_number = std::stoi(std::string(data, 4));
-//     std::string player_name(data + 4, 14);
-//     Player player(player_name, 12, 1, std::rand() % (NUMBER_OF_CARDS + 1), client_socket);
-//     return std::make_pair(room_number, player);
-// }
+// Function to handle login
+std::pair<int, Player> handle_login(const char *data, int client_socket)
+{
+    int room_number = std::stoi(std::string(data, 4));
+    std::string player_name(data + 4, 14);
+    Player player(player_name, 12, 1, std::rand() % (NUMBER_OF_CARDS + 1), client_socket);
 
-// // Function to handle player joining a room
-// bool handle_room(int room_number, Player &player)
-// {
-//     if (game_rooms.find(room_number) == game_rooms.end())
-//     {
-//         game_rooms[room_number] = GameState(0, 0, 1, 0, {});
-//     }
+    std::cout << "Created player " << player_name << " in room " << room_number << std::endl;
 
-//     if (game_rooms[room_number].number_of_players >= 8)
-//     {
-//         send(player.socket_fd, "0", 1, 0); // Room is full, send 0 to the client
-//         return false;
-//     }
+    return std::make_pair(room_number, player);
+}
 
-//     game_rooms[room_number].players.push_back(player);
-//     game_rooms[room_number].number_of_players++;
-//     return true;
-// }
+// Function to handle player joining a room
+bool handle_room(int room_number, Player &player)
+{
+    std::cout << "Player " << player.name << " joining room " << room_number << std::endl;
+    if (game_rooms.find(room_number) == game_rooms.end())
+    {
+        game_rooms[room_number] = GameState(0, 0, 1, 0, {});
+    }
 
-// // Function to handle client communication
-// void handle_client(int client_socket)
-// {
-//     char data[32];
-//     ssize_t bytes_received;
+    std::cout << "Number of players in room " << room_number << ": " << game_rooms[room_number].number_of_players << std::endl;
+    if (game_rooms[room_number].number_of_players >= 8)
+    {
+        send(player.socket_fd, "0", 1, 0); // Room is full, send 0 to the client
+        return false;
+    }
 
-//     // Receive login data
-//     bytes_received = recv(client_socket, data, sizeof(data), 0);
-//     if (bytes_received <= 0)
-//     {
-//         close(client_socket);
-//         return;
-//     }
+    game_rooms[room_number].players.push_back(player);
+    game_rooms[room_number].number_of_players++;
+    return true;
+}
 
-//     int room_number;
-//     Player player;
-//     std::tie(room_number, player) = handle_login(data, client_socket);
+std::string convert_game_state_to_bytes(const GameState &game_state)
+{
+    std::stringstream result_byte;
 
-//     if (!handle_room(room_number, player))
-//     {
-//         close(client_socket);
-//         return;
-//     }
+    result_byte << game_state.winner;
+    result_byte << game_state.number_of_players;
+    result_byte << game_state.who_to_move;
+    result_byte << '0';
 
-//     int player_id = game_rooms[room_number].number_of_players;
-//     send(client_socket, std::to_string(player_id).c_str(), sizeof(int), 0);
-//     // Broadcast game state
-//     // broadcast_game_state(game_rooms[room_number]);
+    for (const auto &player : game_state.players)
+    {
+        result_byte << std::left << std::setw(14) << std::setfill(' ') << player.name;
+        result_byte << std::right << std::setw(2) << std::setfill('0') << player.cards_on_hand;
+        result_byte << std::right << std::setw(2) << std::setfill('0') << player.cards_on_table;
+        result_byte << std::right << std::setw(2) << std::setfill('0') << player.card_face_up;
+    }
 
-//     while (true)
-//     {
-//         bytes_received = recv(client_socket, data, sizeof(data), 0);
-//         if (bytes_received <= 0)
-//         {
-//             close(client_socket);
-//             return;
-//         }
+    std::cout << "result_byte : " << result_byte.str() << std::endl;
 
-//         if (std::string(data, 1) == "c")
-//         {
-//             // new_card(game_rooms[room_number], player);
-//         }
-//         else if (std::string(data, 1) == "t")
-//         {
-//             // take_totem(game_rooms[room_number], player, player_id - 1);
-//         }
-//     }
-// }
+    return result_byte.str();
+}
+
+void broadcast_game_state(const GameState &game_state)
+{
+    std::string game_state_bytes = convert_game_state_to_bytes(game_state);
+
+    std::cout << "Broadcasting game state: " << game_state_bytes << std::endl;
+
+    for (const Player &player : game_state.players)
+    {
+        std::cout << "Sending to player: " << player.name << std::endl;
+        send(player.socket_fd, game_state_bytes.c_str(), game_state_bytes.size(), 0);
+    }
+}
+
+// Function to handle client communication
+void handle_client(int client_socket)
+{
+    char data[32];
+    ssize_t bytes_received;
+
+    // Receive login data
+    bytes_received = recv(client_socket, data, sizeof(data), 0);
+    if (bytes_received <= 0)
+    {
+        close(client_socket);
+        return;
+    }
+
+    int room_number;
+    Player player;
+    std::tie(room_number, player) = handle_login(data, client_socket);
+
+    if (!handle_room(room_number, player))
+    {
+        close(client_socket);
+        return;
+    }
+    std::cout << "Player " << player.name << " joined room " << room_number << std::endl;
+
+    int player_id = game_rooms[room_number].number_of_players;
+    send(client_socket, std::to_string(player_id).c_str(), sizeof(int), 0);
+    // Broadcast game state
+    broadcast_game_state(game_rooms[room_number]);
+    while (true)
+    {
+        bytes_received = recv(client_socket, data, sizeof(data), 0);
+
+        std::cout << "Received " << bytes_received << " bytes" << std::endl;
+
+        if (bytes_received <= 0)
+        {
+            // Client disconnected or error occurred
+            std::cerr << "Client disconnected or error occurred" << std::endl;
+            break;
+        }
+        if (std::string(data, 1) == "c")
+        {
+            // new_card(game_rooms[room_number], player);
+        }
+        else if (std::string(data, 1) == "t")
+        {
+            // take_totem(game_rooms[room_number], player, player_id - 1);
+        }
+    }
+
+    // Cleanup
+    close(client_socket);
+    return;
+}
 
 // Function to start the server
 void start_server()
@@ -174,6 +223,8 @@ void start_server()
 
     while (true)
     {
+        std::cout << "Waiting for incoming connections..." << std::endl;
+
         client_socket = accept(server_socket, (struct sockaddr *)&client_addr, &client_addr_len);
         if (client_socket == -1)
         {
@@ -183,9 +234,9 @@ void start_server()
 
         std::cout << "Accepted connection from " << inet_ntoa(client_addr.sin_addr) << std::endl;
 
-        // // Start a new thread to handle the client
-        // std::thread client_thread(handle_client, client_socket);
-        // client_thread.detach(); // Detach the thread to run independently
+        // Start a new thread to handle the client
+        std::thread client_thread(handle_client, client_socket);
+        client_thread.detach(); // Detach the thread to run independently
     }
 }
 
