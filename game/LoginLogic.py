@@ -47,7 +47,7 @@ class LoginLogic:
         data is incorrect.
         """
         if len(self.username) > 0 and len(self.room_number) == 4:
-            print(f'user: {self.username}, room: {self.room_number}')
+            print(f"user: {self.username}, room: {self.room_number}")
             message = f"{self.room_number:04}{self.username:<14}"
             self.client_socket.send(message.encode())
             rec = self.client_socket.recv(1)
@@ -146,7 +146,7 @@ class LoginLogic:
         """
         pygame.draw.rect(surface, DARK_GRAY, (x, y, width, height), 0, 5)
         pygame.draw.rect(surface, BLACK, (x, y, width, height), 2, 5)
-        self.draw_text(surface, text, x+6, y+6)
+        self.draw_text(surface, text, x + 6, y + 6)
 
     def draw_login_screen(self, screen):
         """
@@ -159,13 +159,21 @@ class LoginLogic:
         and a "Conect" button. The active input field is highlighted with a black border.
         """
         self.draw_text(screen, "Username:", 50, 50)
-        pygame.draw.rect(screen, BLACK if self.active_input ==
-                         "username" else WHITE, (50, 85, 310, 30), 2)
+        pygame.draw.rect(
+            screen,
+            BLACK if self.active_input == "username" else WHITE,
+            (50, 85, 310, 30),
+            2,
+        )
         self.draw_text(screen, self.username, 55, 90)
 
         self.draw_text(screen, "Room Number:", 50, 150)
-        pygame.draw.rect(screen, BLACK if self.active_input ==
-                         "room_number" else WHITE, (50, 185, 64, 30), 2)
+        pygame.draw.rect(
+            screen,
+            BLACK if self.active_input == "room_number" else WHITE,
+            (50, 185, 64, 30),
+            2,
+        )
         self.draw_text(screen, self.room_number, 55, 190)
         self.draw_button(screen, "Conect", 250, 230, 90, 35)
 
