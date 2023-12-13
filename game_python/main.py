@@ -12,8 +12,8 @@ from constants import (
     LOGIN_WINDOW_HEIGHT,
     FONT_SIZE,
 )
-from game.LoginLogic import LoginLogic
-from game.GameLogic import GameLogic
+from LoginLogic import LoginLogic
+from GameLogic import GameLogic
 
 
 def login_window(client_socket):
