@@ -4,6 +4,8 @@ Server::Server(int port) : port(port), server_socket(-1) {}
 
 void Server::start()
 {
+    std::srand(static_cast<unsigned int>(std::time(nullptr)));
+
     struct sockaddr_in server_addr, client_addr;
     socklen_t client_addr_len = sizeof(client_addr);
 
@@ -87,7 +89,8 @@ void Server::handle_client(int client_socket)
     {
         bytes_received = recv(client_socket, data, sizeof(data), 0);
 
-        std::cout << "Received " << bytes_received << " bytes" << std::endl;
+        // std::cout << "Received " << bytes_received << " bytes from " << player.name << std::endl;
+        // std::cout << "Received data: " << std::string(data, bytes_received) << std::endl;
 
         if (bytes_received <= 0)
         {
@@ -97,11 +100,13 @@ void Server::handle_client(int client_socket)
         }
         if (std::string(data, 1) == "c")
         {
-            // new_card(game_rooms[room_number], player);
+            new_card(this->game_rooms[room_number], player_id);
+            broadcast_game_state(this->game_rooms[room_number]);
         }
         else if (std::string(data, 1) == "t")
         {
-            // take_totem(game_rooms[room_number], player, player_id - 1);
+            take_totem(this->game_rooms[room_number], player_id);
+            broadcast_game_state(this->game_rooms[room_number]);
         }
     }
 
@@ -123,21 +128,21 @@ std::pair<int, Player> Server::handle_login(const char *data, int client_socket)
 
 bool Server::handle_room(int room_number, Player &player)
 {
-    std::cout << "Player " << player.name << " joining room " << room_number << std::endl;
-    if (game_rooms.find(room_number) == game_rooms.end())
+    std::cout << "Player " << player.name << " wants to join room " << room_number << std::endl;
+    if (this->game_rooms.find(room_number) == game_rooms.end())
     {
-        game_rooms[room_number] = GameState(0, 0, 1, 0, {});
+        this->game_rooms[room_number] = GameState(0, 0, 1, 0, {});
     }
 
     std::cout << "Number of players in room " << room_number << ": " << game_rooms[room_number].number_of_players << std::endl;
-    if (game_rooms[room_number].number_of_players >= 8)
+    if (this->game_rooms[room_number].number_of_players >= 8)
     {
         send(player.socket_fd, "0", 1, 0); // Room is full, send 0 to the client
         return false;
     }
 
-    game_rooms[room_number].players.push_back(player);
-    game_rooms[room_number].number_of_players++;
+    this->game_rooms[room_number].players.push_back(player);
+    this->game_rooms[room_number].number_of_players++;
     return true;
 }
 
@@ -158,7 +163,7 @@ std::string Server::convert_game_state_to_bytes(const GameState &game_state)
         result_byte << std::right << std::setw(2) << std::setfill('0') << player.card_face_up;
     }
 
-    std::cout << "result_byte : " << result_byte.str() << std::endl;
+    // std::cout << "result_byte : " << result_byte.str() << std::endl;
 
     return result_byte.str();
 }
@@ -167,11 +172,74 @@ void Server::broadcast_game_state(const GameState &game_state)
 {
     std::string game_state_bytes = convert_game_state_to_bytes(game_state);
 
-    std::cout << "Broadcasting game state: " << game_state_bytes << std::endl;
+    // std::cout << "Broadcasting game state: " << game_state_bytes << std::endl;
 
     for (const Player &player : game_state.players)
     {
         std::cout << "Sending to player: " << player.name << std::endl;
         send(player.socket_fd, game_state_bytes.c_str(), game_state_bytes.size(), 0);
     }
+}
+
+void Server::new_card(GameState &game_state, int player_id)
+{
+
+    Player &current_player = game_state.players[player_id - 1];
+
+    // if there is no card in hand take all cards from table
+    if (current_player.cards_on_hand == 0)
+    {
+        current_player.cards_on_hand = current_player.cards_on_table;
+        current_player.cards_on_table = 0;
+    }
+
+    current_player.cards_on_hand -= 1;
+    current_player.cards_on_table += 1;
+    current_player.card_face_up = std::rand() % NUMBER_OF_CARDS;
+    game_state.who_to_move = (game_state.who_to_move % game_state.number_of_players) + 1;
+}
+
+void Server::take_totem(GameState &game_state, int player_id)
+{
+
+    Player &current_player = game_state.players[player_id - 1];
+
+    std::vector<Player *> players_with_same_card;
+    for (auto &p : game_state.players)
+        if (p.card_face_up / 5 == current_player.card_face_up / 5)
+            players_with_same_card.push_back(&p);
+
+    if (players_with_same_card.size() == 1)
+    {
+
+        std::cout << "Player " << current_player.name << "took the totem but shouldn't have!!!" << std::endl;
+
+        for (auto &p : game_state.players)
+        {
+            current_player.cards_on_hand += p.cards_on_table;
+            p.cards_on_table = 1;
+            p.cards_on_hand -= 1;
+            p.card_face_up = std::rand() % this->NUMBER_OF_CARDS;
+        }
+    }
+    else
+    {
+        std::cout << "Player " << current_player.name << " took the totem!!! Distributing cards." << std::endl;
+
+        int numbers_of_cards_after_split = current_player.cards_on_table / (players_with_same_card.size() - 1);
+        for (size_t i = 0; i < players_with_same_card.size(); ++i)
+        {
+            auto &p = *players_with_same_card[i];
+            if (i != static_cast<size_t>(player_id - 1))
+            {
+                p.cards_on_hand += numbers_of_cards_after_split;
+                p.cards_on_hand += p.cards_on_table;
+            }
+            p.cards_on_table = 1;
+            p.cards_on_hand -= 1;
+            p.card_face_up = std::rand() % this->NUMBER_OF_CARDS;
+        }
+    }
+
+    game_state.who_to_move = (player_id % game_state.number_of_players) + 1;
 }
