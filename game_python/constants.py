@@ -1,4 +1,5 @@
 from threading import Semaphore
+
 # Kolory
 WHITE = (255, 255, 255)
 GRAY = (150, 150, 150)

@@ -1,9 +1,19 @@
 import socket
 import pygame
 import sys
-from constants import WHITE, GRAY, DARK_GRAY, BLACK, WINDOW_WIDTH, LOGIN_WINDOW_WIDTH, WINDOW_HEIGHT, LOGIN_WINDOW_HEIGHT, FONT_SIZE
-from login_logic import LoginLogic
-from game_logic import GameLogic
+from constants import (
+    WHITE,
+    GRAY,
+    DARK_GRAY,
+    BLACK,
+    WINDOW_WIDTH,
+    LOGIN_WINDOW_WIDTH,
+    WINDOW_HEIGHT,
+    LOGIN_WINDOW_HEIGHT,
+    FONT_SIZE,
+)
+from LoginLogic import LoginLogic
+from GameLogic import GameLogic
 
 
 def login_window(client_socket):
@@ -79,7 +89,7 @@ def main():
     """
     try:
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client_socket.connect(('localhost', 1100))
+        client_socket.connect(("localhost", 1100))
         me = 1
         me = login_window(client_socket)
         game_window(client_socket, me)

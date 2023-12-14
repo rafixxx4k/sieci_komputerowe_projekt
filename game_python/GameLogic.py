@@ -22,10 +22,10 @@ class GameLogic:
         {"image": (50, 50)},
         {"image": (50, 200)},
         {"image": (50, 350)},
-        {"image": (WINDOW_WIDTH-150, 50)},
-        {"image": (WINDOW_WIDTH-150, 200)},
-        {"image": (WINDOW_WIDTH-150, 350)},
-        {"image": (350, 450)}
+        {"image": (WINDOW_WIDTH - 150, 50)},
+        {"image": (WINDOW_WIDTH - 150, 200)},
+        {"image": (WINDOW_WIDTH - 150, 350)},
+        {"image": (350, 450)},
     ]
     board_type = [
         [],
@@ -84,21 +84,28 @@ class GameLogic:
         Args:
             state (str): The game state received from the server.
         """
+        state = state.replace("\x00", "")
         winner = int(state[0])
         number_of_players = int(state[1])
         who_to_move = int(state[2])
         message = int(state[3])
         self.gameState = GameState(
-            winner, number_of_players, who_to_move, message, [Player() for _ in range(number_of_players)])
+            winner,
+            number_of_players,
+            who_to_move,
+            message,
+            [Player() for _ in range(number_of_players)],
+        )
         for i in range(number_of_players):
-            index = 4 + i*20
-            self.gameState.players[i].name = state[index:index+14]
+            index = 4 + i * 20
+            self.gameState.players[i].name = state[index : index + 14]
             self.gameState.players[i].cards_on_hand = int(
-                state[index+14:index+16])
+                state[index + 14 : index + 16]
+            )
             self.gameState.players[i].cards_on_table = int(
-                state[index+16:index+18])
-            self.gameState.players[i].card_face_up = int(
-                state[index+18:index+20])
+                state[index + 16 : index + 18]
+            )
+            self.gameState.players[i].card_face_up = int(state[index + 18 : index + 20])
 
     def mouse_handler(self, event):
         """
@@ -155,7 +162,11 @@ class GameLogic:
             sprite = self.cards.deck_sprite[persons_up]
             x, y = self.positions[j]["image"]
             self.draw_text(
-                screen, f'{persons_name}: {persons_hand}/{persons_table}', x-30, y+108)
+                screen,
+                f"{persons_name}: {persons_hand}/{persons_table}",
+                x - 30,
+                y + 108,
+            )
             sprite.rect.topleft = (x, y)
             screen.blit(sprite.image, sprite.rect)
         # if player is to move draw green frame around his cards
@@ -163,11 +174,13 @@ class GameLogic:
             pygame.draw.rect(screen, (0, 255, 0), (300, 400, 200, 200), 5)
         # else draw yellow frame around person to move
         else:
-            position = (self.gameState.who_to_move - self.me +
-                        self.gameState.number_of_players) % self.gameState.number_of_players
-            x, y = self.positions[self.board_type[self.gameState.number_of_players]
-                                  [position]]["image"]
-            x, y = x-50, y-50
+            position = (
+                self.gameState.who_to_move - self.me + self.gameState.number_of_players
+            ) % self.gameState.number_of_players
+            x, y = self.positions[
+                self.board_type[self.gameState.number_of_players][position]
+            ]["image"]
+            x, y = x - 50, y - 50
             pygame.draw.rect(screen, (255, 255, 0), (x, y, 200, 200), 5)
 
         # Release the semaphore after updating the game state

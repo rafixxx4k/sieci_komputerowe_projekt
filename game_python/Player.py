@@ -1,5 +1,7 @@
 class Player:
-    def __init__(self, name='', cards_on_hand=0, cards_on_table=0, card_face_up=0, socket=None):
+    def __init__(
+        self, name="", cards_on_hand=0, cards_on_table=0, card_face_up=0, socket=None
+    ):
         """
         Initializes a Player object.
 

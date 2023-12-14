@@ -32,11 +32,11 @@ class Cards:
         """
         for i in range(1, 5):
             for x in ["c", "f", "n", "p", "z"]:
-                file_path = os.path.join("img", f"{i}{x}.png")
+                file_path = os.path.join("./../img", f"{i}{x}.png")
                 texture = pygame.image.load(file_path)
                 self.deck.append(texture)
 
-        file_path = os.path.join("img", "totem.png")
+        file_path = os.path.join("./../img", "totem.png")
         self.totem = pygame.image.load(file_path)
 
         for texture in self.deck:
