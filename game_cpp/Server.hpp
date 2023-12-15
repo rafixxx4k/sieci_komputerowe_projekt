@@ -37,6 +37,7 @@ private:
     void take_totem(GameState &game_state, int player_id);
     std::string convert_game_state_to_bytes(const GameState &game_state);
     void broadcast_game_state(const GameState &game_state);
+    int who_to_move(GameState &game_state);
 };
 
 #endif // SERVER_HPP
