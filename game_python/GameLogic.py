@@ -155,6 +155,10 @@ class GameLogic:
         # draw players and cards
         for i, j in enumerate(self.board_type[self.gameState.number_of_players]):
             person = (self.me - 1 + i) % self.gameState.number_of_players
+
+            if self.gameState.players[person].card_face_up == -1:
+                continue
+
             persons_name = self.gameState.players[person].name
             persons_hand = self.gameState.players[person].cards_on_hand
             persons_table = self.gameState.players[person].cards_on_table
