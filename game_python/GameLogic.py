@@ -156,14 +156,16 @@ class GameLogic:
         for i, j in enumerate(self.board_type[self.gameState.number_of_players]):
             person = (self.me - 1 + i) % self.gameState.number_of_players
 
-            if self.gameState.players[person].card_face_up == -1:
-                continue
-
             persons_name = self.gameState.players[person].name
             persons_hand = self.gameState.players[person].cards_on_hand
             persons_table = self.gameState.players[person].cards_on_table
             persons_up = self.gameState.players[person].card_face_up
-            sprite = self.cards.deck_sprite[persons_up]
+
+            if persons_up == -1:
+                sprite = self.cards.disconnected_sprite
+            else:
+                sprite = self.cards.deck_sprite[persons_up]
+
             x, y = self.positions[j]["image"]
             self.draw_text(
                 screen,

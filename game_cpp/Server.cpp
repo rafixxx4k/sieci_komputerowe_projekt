@@ -246,7 +246,7 @@ void Server::take_totem(GameState &game_state, int player_id)
 
     std::vector<Player *> players_with_same_card;
     for (auto &p : game_state.players)
-        if (p.card_face_up / 5 == current_player.card_face_up / 5)
+        if (p.card_face_up != -1 && p.card_face_up / 5 == current_player.card_face_up / 5)
             players_with_same_card.push_back(&p);
 
     if (players_with_same_card.size() == 1)
@@ -256,6 +256,8 @@ void Server::take_totem(GameState &game_state, int player_id)
 
         for (auto &p : game_state.players)
         {
+            if (p.card_face_up == -1)
+                continue;
             current_player.cards_on_hand += p.cards_on_table;
             p.cards_on_table = 1;
             p.cards_on_hand -= 1;
