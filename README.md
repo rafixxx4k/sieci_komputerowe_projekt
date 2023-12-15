@@ -6,4 +6,4 @@ Steps to launch the game:
 * `cd sieci-komputerowe-projekt`
 * `g++ game_cpp/*.cpp -o server`
 * `./server`, now the server is listening and waiting for clients
-* open a new terminal for each player and run: `python game_python/main.py`
+* open a new terminal for each player and run: `cd game_python && python main.py`
