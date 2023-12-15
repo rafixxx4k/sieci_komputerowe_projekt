@@ -39,6 +39,9 @@ class Cards:
         file_path = os.path.join("./../img", "totem.png")
         self.totem = pygame.image.load(file_path)
 
+        file_path = os.path.join("./../img", "disconnected.png")
+        self.disconnected = pygame.image.load(file_path)
+
         for texture in self.deck:
             sprite = pygame.sprite.Sprite()
             sprite.image = texture
@@ -48,3 +51,7 @@ class Cards:
         self.totem_sprite = pygame.sprite.Sprite()
         self.totem_sprite.image = self.totem
         self.totem_sprite.rect = sprite.image.get_rect()
+
+        self.disconnected_sprite = pygame.sprite.Sprite()
+        self.disconnected_sprite.image = self.disconnected
+        self.disconnected_sprite.rect = sprite.image.get_rect()

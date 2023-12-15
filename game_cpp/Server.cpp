@@ -96,6 +96,23 @@ void Server::handle_client(int client_socket)
         {
             // Client disconnected or error occurred
             std::cerr << "Client disconnected or error occurred" << std::endl;
+            this->game_rooms[room_number].players[player_id - 1].card_face_up = -1;
+
+            // if the player who disconnected was the one to move, change who to move
+            // end game if all players disconnected (who_to_move returns -1)
+            if (this->game_rooms[room_number].who_to_move == player_id)
+            {
+                std::cout << "Disconnected player had move, changing who to move" << std::endl;
+                if (this->who_to_move(game_rooms[room_number]) == -1)
+                {
+                    std::cout << "All players disconnected. Closing room " << room_number << std::endl;
+                    this->game_rooms.erase(room_number);
+                    close(client_socket);
+                    return;
+                }
+            }
+
+            broadcast_game_state(this->game_rooms[room_number]);
             break;
         }
         if (std::string(data, 1) == "c")
@@ -113,6 +130,26 @@ void Server::handle_client(int client_socket)
     // Cleanup
     close(client_socket);
     return;
+}
+
+int Server::who_to_move(GameState &game_state)
+{
+    int disconnected = 0;
+    while (true)
+    {
+        game_state.who_to_move = (game_state.who_to_move % game_state.number_of_players) + 1;
+
+        if (game_state.players[game_state.who_to_move - 1].card_face_up == -1)
+            disconnected++;
+        else
+            break;
+
+        // if all players are disconnected
+        if (disconnected == game_state.number_of_players)
+            return -1;
+    }
+
+    return 0;
 }
 
 std::pair<int, Player> Server::handle_login(const char *data, int client_socket)
@@ -176,6 +213,8 @@ void Server::broadcast_game_state(const GameState &game_state)
 
     for (const Player &player : game_state.players)
     {
+        if (player.card_face_up == -1)
+            continue;
         std::cout << "Sending to player: " << player.name << std::endl;
         send(player.socket_fd, game_state_bytes.c_str(), game_state_bytes.size(), 0);
     }
@@ -196,7 +235,8 @@ void Server::new_card(GameState &game_state, int player_id)
     current_player.cards_on_hand -= 1;
     current_player.cards_on_table += 1;
     current_player.card_face_up = std::rand() % NUMBER_OF_CARDS;
-    game_state.who_to_move = (game_state.who_to_move % game_state.number_of_players) + 1;
+
+    this->who_to_move(game_state);
 }
 
 void Server::take_totem(GameState &game_state, int player_id)
@@ -206,7 +246,7 @@ void Server::take_totem(GameState &game_state, int player_id)
 
     std::vector<Player *> players_with_same_card;
     for (auto &p : game_state.players)
-        if (p.card_face_up / 5 == current_player.card_face_up / 5)
+        if (p.card_face_up != -1 && p.card_face_up / 5 == current_player.card_face_up / 5)
             players_with_same_card.push_back(&p);
 
     if (players_with_same_card.size() == 1)
@@ -216,6 +256,8 @@ void Server::take_totem(GameState &game_state, int player_id)
 
         for (auto &p : game_state.players)
         {
+            if (p.card_face_up == -1)
+                continue;
             current_player.cards_on_hand += p.cards_on_table;
             p.cards_on_table = 1;
             p.cards_on_hand -= 1;
@@ -241,5 +283,5 @@ void Server::take_totem(GameState &game_state, int player_id)
         }
     }
 
-    game_state.who_to_move = (player_id % game_state.number_of_players) + 1;
+    this->who_to_move(game_state);
 }
