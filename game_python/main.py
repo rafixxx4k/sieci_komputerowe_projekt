@@ -80,7 +80,7 @@ def game_window(client_socket, me):
         clock.tick(30)
 
 
-def main(ip):
+def main(ip, port):
     """
     The main function that initializes the client socket, handles login and starts the game.
 
@@ -92,7 +92,7 @@ def main(ip):
     """
     try:
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client_socket.connect((ip, 1100))
+        client_socket.connect((ip, port))
         me = 1
         me = login_window(client_socket)
         game_window(client_socket, me)
@@ -111,14 +111,20 @@ def check_ip(ip):
 
 
 if __name__ == "__main__":
-    # use ip address of the server as an argument
-    if len(sys.argv) != 2:
-        print("Usage: python3 main.py <ip_address>")
+    # use ip address and port of the server as arguments
+    if len(sys.argv) < 2 or len(sys.argv) > 3:
+        print("Usage: python3 main.py <ip_address> [port]")
         sys.exit()
 
     ip = sys.argv[1]
+    port = int(sys.argv[2]) if len(sys.argv) == 3 else 1100
+
     if not check_ip(ip):
         print("Invalid ip address")
         sys.exit()
 
-    main(ip)
+    if not 1024 <= port <= 65535:
+        print("Invalid port number")
+        sys.exit()
+
+    main(ip, port)
