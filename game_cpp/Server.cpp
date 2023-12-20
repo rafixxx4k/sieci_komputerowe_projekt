@@ -117,11 +117,13 @@ void Server::handle_client(int client_socket)
         }
         if (std::string(data, 1) == "c")
         {
+            std::cout << "Player " << player.name << " puts a new card" << std::endl;
             put_new_card(this->game_rooms[room_number], player_id);
             broadcast_game_state(this->game_rooms[room_number]);
         }
         else if (std::string(data, 1) == "t")
         {
+            std::cout << "Player " << player.name << " takes the totem" << std::endl;
             take_totem(this->game_rooms[room_number], player_id);
             broadcast_game_state(this->game_rooms[room_number]);
         }
@@ -191,7 +193,6 @@ std::string Server::convert_game_state_to_bytes(const GameState &game_state)
     result_byte << game_state.winner;
     result_byte << game_state.number_of_players;
     result_byte << game_state.who_to_move;
-    // result_byte << '0';
 
     for (const auto &player : game_state.players)
     {
@@ -207,7 +208,7 @@ std::string Server::convert_game_state_to_bytes(const GameState &game_state)
     return result_byte.str();
 }
 
-void Server::broadcast_game_state(const GameState &game_state)
+void Server::broadcast_game_state(GameState &game_state)
 {
     std::string game_state_bytes = convert_game_state_to_bytes(game_state);
 
@@ -221,6 +222,10 @@ void Server::broadcast_game_state(const GameState &game_state)
         // std::cout << "Sending to player: " << player.name << std::endl;
         send(player.socket_fd, game_state_bytes.c_str(), game_state_bytes.size(), 0);
     }
+
+    // Set all messages to 0
+    for (auto &player : game_state.players)
+        player.message = 0;
 }
 
 void Server::put_new_card(GameState &game_state, int player_id)
@@ -247,6 +252,7 @@ void Server::take_totem(GameState &game_state, int player_id)
     {
 
         std::cout << "Player " << current_player.name << "took the totem but shouldn't have!!!" << std::endl;
+        current_player.message = 3; // not the same card
 
         for (auto &p : game_state.players)
         {
@@ -260,6 +266,7 @@ void Server::take_totem(GameState &game_state, int player_id)
     else
     {
         std::cout << "Player " << current_player.name << " took the totem!!! Distributing cards." << std::endl;
+        current_player.message = 1; // took the totem (success)
 
         int numbers_of_cards_after_split = current_player.cards_on_table / (players_with_same_card.size() - 1);
         for (size_t i = 0; i < players_with_same_card.size(); ++i)
@@ -269,6 +276,7 @@ void Server::take_totem(GameState &game_state, int player_id)
             {
                 p.cards_on_hand += numbers_of_cards_after_split;
                 p.cards_on_hand += p.cards_on_table;
+                p.message = 2; // unfortunately someone took the totem, you receive cards
             }
 
             p.cards_on_table = 0;
