@@ -28,7 +28,7 @@ private:
     int server_socket;
     int port;
     const int NUMBER_OF_CARDS = 19;
-    const int STARTING_CARDS = 2;
+    const int STARTING_CARDS = 12;
     std::unordered_map<int, GameState> game_rooms;
 
     void handle_client(int client_socket);
@@ -39,7 +39,7 @@ private:
     void take_totem(GameState &game_state, int player_id);
 
     std::string convert_game_state_to_bytes(const GameState &game_state);
-    void broadcast_game_state(const GameState &game_state);
+    void broadcast_game_state(GameState &game_state);
 
     int who_to_move(GameState &game_state);
 
