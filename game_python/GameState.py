@@ -13,9 +13,8 @@ class GameState:
         players (list): A list of Player objects representing the players in the game.
     """
 
-    def __init__(self, winner, number_of_players, who_to_move, message, players):
+    def __init__(self, winner, number_of_players, who_to_move, players):
         self.winner = winner
         self.number_of_players = number_of_players
         self.who_to_move = who_to_move
-        self.message = message
         self.players = players

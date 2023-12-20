@@ -191,7 +191,7 @@ std::string Server::convert_game_state_to_bytes(const GameState &game_state)
     result_byte << game_state.winner;
     result_byte << game_state.number_of_players;
     result_byte << game_state.who_to_move;
-    result_byte << '0';
+    // result_byte << '0';
 
     for (const auto &player : game_state.players)
     {
@@ -199,6 +199,7 @@ std::string Server::convert_game_state_to_bytes(const GameState &game_state)
         result_byte << std::right << std::setw(2) << std::setfill('0') << player.cards_on_hand;
         result_byte << std::right << std::setw(2) << std::setfill('0') << player.cards_on_table;
         result_byte << std::right << std::setw(2) << std::setfill('0') << player.card_face_up;
+        result_byte << std::right << std::setw(1) << std::setfill('0') << player.message;
     }
 
     // std::cout << "result_byte : " << result_byte.str() << std::endl;

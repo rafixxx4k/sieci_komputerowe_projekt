@@ -12,6 +12,7 @@ public:
     int card_face_up;
     int socket_fd;
     int id;
+    int message;
 
     Player()
     {
