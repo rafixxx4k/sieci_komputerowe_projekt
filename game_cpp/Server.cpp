@@ -117,7 +117,7 @@ void Server::handle_client(int client_socket)
         }
         if (std::string(data, 1) == "c")
         {
-            new_card(this->game_rooms[room_number], player_id);
+            put_new_card(this->game_rooms[room_number], player_id);
             broadcast_game_state(this->game_rooms[room_number]);
         }
         else if (std::string(data, 1) == "t")
@@ -156,7 +156,7 @@ std::pair<int, Player> Server::handle_login(const char *data, int client_socket)
 {
     int room_number = std::stoi(std::string(data, 4));
     std::string player_name(data + 4, 14);
-    Player player(player_name, 12, 1, std::rand() % (NUMBER_OF_CARDS + 1), client_socket);
+    Player player(player_name, this->STARTING_CARDS, 1, std::rand() % (NUMBER_OF_CARDS + 1), client_socket, -1);
 
     std::cout << "Created player " << player_name << " in room " << room_number << std::endl;
 
@@ -178,8 +178,9 @@ bool Server::handle_room(int room_number, Player &player)
         return false;
     }
 
-    this->game_rooms[room_number].players.push_back(player);
     this->game_rooms[room_number].number_of_players++;
+    player.id = this->game_rooms[room_number].number_of_players;
+    this->game_rooms[room_number].players.push_back(player);
     return true;
 }
 
@@ -210,31 +211,23 @@ void Server::broadcast_game_state(const GameState &game_state)
     std::string game_state_bytes = convert_game_state_to_bytes(game_state);
 
     // std::cout << "Broadcasting game state: " << game_state_bytes << std::endl;
+    std::cout << "Broadcasting game state" << std::endl;
 
     for (const Player &player : game_state.players)
     {
         if (player.card_face_up == -1)
             continue;
-        std::cout << "Sending to player: " << player.name << std::endl;
+        // std::cout << "Sending to player: " << player.name << std::endl;
         send(player.socket_fd, game_state_bytes.c_str(), game_state_bytes.size(), 0);
     }
 }
 
-void Server::new_card(GameState &game_state, int player_id)
+void Server::put_new_card(GameState &game_state, int player_id)
 {
-
     Player &current_player = game_state.players[player_id - 1];
 
-    // if there is no card in hand take all cards from table
-    if (current_player.cards_on_hand == 0)
-    {
-        current_player.cards_on_hand = current_player.cards_on_table;
-        current_player.cards_on_table = 0;
-    }
-
-    current_player.cards_on_hand -= 1;
-    current_player.cards_on_table += 1;
-    current_player.card_face_up = std::rand() % NUMBER_OF_CARDS;
+    if (current_player.cards_on_hand != 0)
+        this->new_card(game_state, current_player);
 
     this->who_to_move(game_state);
 }
@@ -259,9 +252,8 @@ void Server::take_totem(GameState &game_state, int player_id)
             if (p.card_face_up == -1)
                 continue;
             current_player.cards_on_hand += p.cards_on_table;
-            p.cards_on_table = 1;
-            p.cards_on_hand -= 1;
-            p.card_face_up = std::rand() % this->NUMBER_OF_CARDS;
+            p.cards_on_table = 0;
+            this->new_card(game_state, p);
         }
     }
     else
@@ -277,11 +269,28 @@ void Server::take_totem(GameState &game_state, int player_id)
                 p.cards_on_hand += numbers_of_cards_after_split;
                 p.cards_on_hand += p.cards_on_table;
             }
-            p.cards_on_table = 1;
-            p.cards_on_hand -= 1;
-            p.card_face_up = std::rand() % this->NUMBER_OF_CARDS;
+
+            p.cards_on_table = 0;
+            this->new_card(game_state, p);
         }
     }
 
     this->who_to_move(game_state);
+}
+
+void Server::new_card(GameState &game_state, Player &player)
+{
+
+    // std::cout << "Player " << player.name << "id= " << player.id << " got a new card" << std::endl;
+
+    if (player.cards_on_hand == 0)
+    {
+        game_state.winner = player.id;
+        std::cout << "Player " << player.name << player.id << " won the game" << std::endl;
+        return;
+    }
+
+    player.cards_on_hand -= 1;
+    player.cards_on_table += 1;
+    player.card_face_up = std::rand() % NUMBER_OF_CARDS;
 }

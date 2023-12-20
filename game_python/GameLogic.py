@@ -84,8 +84,14 @@ class GameLogic:
         Args:
             state (str): The game state received from the server.
         """
+        print("state: ", state)
         state = state.replace("\x00", "")
         winner = int(state[0])
+
+        if winner != 0:
+            print(f"winner: {winner}")
+            os._exit(0)
+
         number_of_players = int(state[1])
         who_to_move = int(state[2])
         message = int(state[3])

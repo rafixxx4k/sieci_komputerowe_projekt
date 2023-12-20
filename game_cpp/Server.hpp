@@ -28,16 +28,23 @@ private:
     int server_socket;
     int port;
     const int NUMBER_OF_CARDS = 19;
+    const int STARTING_CARDS = 2;
     std::unordered_map<int, GameState> game_rooms;
 
     void handle_client(int client_socket);
+
     std::pair<int, Player> handle_login(const char *data, int client_socket);
     bool handle_room(int room_number, Player &player);
-    void new_card(GameState &game_state, int player_id);
+
     void take_totem(GameState &game_state, int player_id);
+
     std::string convert_game_state_to_bytes(const GameState &game_state);
     void broadcast_game_state(const GameState &game_state);
+
     int who_to_move(GameState &game_state);
+
+    void put_new_card(GameState &game_state, int player_id);
+    void new_card(GameState &game_state, Player &player);
 };
 
 #endif // SERVER_HPP
