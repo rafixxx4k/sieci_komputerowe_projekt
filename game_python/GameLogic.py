@@ -84,20 +84,24 @@ class GameLogic:
         Args:
             state (str): The game state received from the server.
         """
+        print("state: ", state)
         state = state.replace("\x00", "")
         winner = int(state[0])
+
+        if winner != 0:
+            print(f"winner: {winner}")
+            os._exit(0)
+
         number_of_players = int(state[1])
         who_to_move = int(state[2])
-        message = int(state[3])
         self.gameState = GameState(
             winner,
             number_of_players,
             who_to_move,
-            message,
             [Player() for _ in range(number_of_players)],
         )
         for i in range(number_of_players):
-            index = 4 + i * 20
+            index = 3 + i * 21
             self.gameState.players[i].name = state[index : index + 14]
             self.gameState.players[i].cards_on_hand = int(
                 state[index + 14 : index + 16]
@@ -106,6 +110,7 @@ class GameLogic:
                 state[index + 16 : index + 18]
             )
             self.gameState.players[i].card_face_up = int(state[index + 18 : index + 20])
+            self.gameState.players[i].message = state[index + 20]
 
     def mouse_handler(self, event):
         """

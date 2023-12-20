@@ -17,3 +17,4 @@ class Player:
         self.cards_on_table = cards_on_table
         self.card_face_up = card_face_up
         self.socket = socket
+        self.message = 0
