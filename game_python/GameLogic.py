@@ -4,9 +4,11 @@ from Player import Player
 from GameState import GameState
 from Cards import Cards
 from constants import WINDOW_WIDTH, FONT_SIZE_SMALL, BLACK, UPDATE_SEMAPHORE
+from Messages import Messages
 import pygame
 import os
 import socket
+import sys
 
 
 class GameLogic:
@@ -56,6 +58,8 @@ class GameLogic:
         self.listen_thread = threading.Thread(target=self.listen_for_updates)
         self.listen_thread.daemon = True
         self.listen_thread.start()
+        self.last_message = "0"
+        self.message_text = ""
 
     def listen_for_updates(self):
         """
@@ -84,13 +88,10 @@ class GameLogic:
         Args:
             state (str): The game state received from the server.
         """
-        print("state: ", state)
+        print(f"game state: {state}")
         state = state.replace("\x00", "")
         winner = int(state[0])
 
-        if winner != 0:
-            print(f"winner: {winner}")
-            os._exit(0)
 
         number_of_players = int(state[1])
         who_to_move = int(state[2])
@@ -112,6 +113,10 @@ class GameLogic:
             self.gameState.players[i].card_face_up = int(state[index + 18 : index + 20])
             self.gameState.players[i].message = state[index + 20]
 
+    
+    def get_winner(self):
+        return self.gameState.winner
+
     def mouse_handler(self, event):
         """
         Handles the mouse events and updates the game state accordingly.
@@ -121,6 +126,9 @@ class GameLogic:
         """
         # Acquire the semaphore before updating the game state
         UPDATE_SEMAPHORE.acquire()
+        if self.gameState.winner != 0:
+            pygame.quit()
+            sys.exit()
         if 200 <= event.pos[0] <= 600 and 50 <= event.pos[1] < 400:
             self.client_socket.send("t".encode())
         elif 200 <= event.pos[0] <= 600 and 400 <= event.pos[1] < 600:
@@ -143,6 +151,9 @@ class GameLogic:
         """
         text_surface = self.font.render(text, True, BLACK)
         surface.blit(text_surface, (x, y))
+
+    def draw_circle(self,screen,color,x,y,r):
+        pygame.draw.circle(screen,color,(x,y),r)
 
     def draw_game_seen(self, screen):
         """
@@ -193,6 +204,36 @@ class GameLogic:
             ]["image"]
             x, y = x - 50, y - 50
             pygame.draw.rect(screen, (255, 255, 0), (x, y, 200, 200), 5)
-
+        
+        if self.last_message is not self.gameState.players[self.me-1].message:
+            self.message_text = Messages.get(int(self.gameState.players[self.me-1].message))
+            self.last_message = self.gameState.players[self.me-1].message
+            print(self.message_text)
+ 
+        if self.last_message == '1':
+            self.draw_circle(screen,(0,255,0),50,38,8)
+        elif self.last_message in ('2','3'):
+            self.draw_circle(screen,(255,0,0),50,38,8)
+        self.draw_text(
+            screen,
+            text=self.message_text,
+            x=60, 
+            y=30
+        )
         # Release the semaphore after updating the game state
         UPDATE_SEMAPHORE.release()
+    
+    def draw_end_seen(self, screen):
+        if self.gameState.winner == 0:
+            return None
+        UPDATE_SEMAPHORE.acquire()
+        if self.me == self.gameState.winner:
+            screen.fill((0,255,0))
+            self.draw_text(screen,"you won",350,300)
+        else:
+            screen.fill((255,0,0))
+            winner = self.gameState.players[self.gameState.winner].name
+            self.draw_text(screen,f"{winner.strip()} won",350,300)
+        self.draw_text(screen, 'press anywhere to close',500,500)
+        UPDATE_SEMAPHORE.release()
+

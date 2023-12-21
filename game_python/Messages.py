@@ -32,7 +32,3 @@ class Messages:
     def get(message):
         return random.choice(Messages.answers[message])
 
-
-# Usage example:
-random_answer = Messages.get(1)
-print(random_answer)
