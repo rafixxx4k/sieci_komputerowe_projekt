@@ -89,11 +89,9 @@ class GameLogic:
             state (str): The game state received from the server.
         """
 
-        print(f"game state: {state}")
+        # print(f"game state: {state}")
         state = state.replace("\x00", "")
         winner = int(state[0])
-
-
 
         number_of_players = int(state[1])
         who_to_move = int(state[2])
@@ -114,12 +112,10 @@ class GameLogic:
             )
             self.gameState.players[i].card_face_up = int(state[index + 18 : index + 20])
             self.gameState.players[i].message = state[index + 20]
+            self.new_meassage = True
 
-
-    
     def get_winner(self):
         return self.gameState.winner
-
 
     def mouse_handler(self, event):
         """
@@ -156,8 +152,8 @@ class GameLogic:
         text_surface = self.font.render(text, True, BLACK)
         surface.blit(text_surface, (x, y))
 
-    def draw_circle(self,screen,color,x,y,r):
-        pygame.draw.circle(screen,color,(x,y),r)
+    def draw_circle(self, screen, color, x, y, r):
+        pygame.draw.circle(screen, color, (x, y), r)
 
     def draw_game_seen(self, screen):
         """
@@ -208,36 +204,33 @@ class GameLogic:
             ]["image"]
             x, y = x - 50, y - 50
             pygame.draw.rect(screen, (255, 255, 0), (x, y, 200, 200), 5)
-        
-        if self.last_message is not self.gameState.players[self.me-1].message:
-            self.message_text = Messages.get(int(self.gameState.players[self.me-1].message))
-            self.last_message = self.gameState.players[self.me-1].message
-            print(self.message_text)
- 
-        if self.last_message == '1':
-            self.draw_circle(screen,(0,255,0),50,38,8)
-        elif self.last_message in ('2','3'):
-            self.draw_circle(screen,(255,0,0),50,38,8)
-        self.draw_text(
-            screen,
-            text=self.message_text,
-            x=60, 
-            y=30
-        )
+
+        if self.new_meassage:
+            self.message_text = Messages.get(
+                int(self.gameState.players[self.me - 1].message)
+            )
+            self.message = self.gameState.players[self.me - 1].message
+            self.new_meassage = False
+            # print(self.message_text)
+
+        if self.message == "1":
+            self.draw_circle(screen, (0, 255, 0), 50, 38, 8)
+        elif self.message in ("2", "3"):
+            self.draw_circle(screen, (255, 0, 0), 50, 38, 8)
+        self.draw_text(screen, text=self.message_text, x=60, y=30)
         # Release the semaphore after updating the game state
         UPDATE_SEMAPHORE.release()
-    
+
     def draw_end_seen(self, screen):
         if self.gameState.winner == 0:
             return None
         UPDATE_SEMAPHORE.acquire()
         if self.me == self.gameState.winner:
-            screen.fill((0,255,0))
-            self.draw_text(screen,"you won",350,300)
+            screen.fill((0, 255, 0))
+            self.draw_text(screen, "Wygrałeś!!!", 350, 300)
         else:
-            screen.fill((255,0,0))
+            screen.fill((255, 0, 0))
             winner = self.gameState.players[self.gameState.winner].name
-            self.draw_text(screen,f"{winner.strip()} won",350,300)
-        self.draw_text(screen, 'press anywhere to close',500,500)
+            self.draw_text(screen, f"Wygrał gracz {winner.strip()}", 350, 300)
+        self.draw_text(screen, "Naciśnij gdziekolwiek, aby zamknąć ", 480, 500)
         UPDATE_SEMAPHORE.release()
-
