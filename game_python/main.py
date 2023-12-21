@@ -114,11 +114,13 @@ def check_ip(ip):
 
 if __name__ == "__main__":
     # use ip address and port of the server as arguments
+
     if len(sys.argv) > 3:
         print("Usage: python3 main.py [ip_address] [port]")
         sys.exit()
 
     ip = sys.argv[1] if len(sys.argv) >1 else '127.0.0.1'
+
     port = int(sys.argv[2]) if len(sys.argv) == 3 else 1100
 
     if not check_ip(ip):

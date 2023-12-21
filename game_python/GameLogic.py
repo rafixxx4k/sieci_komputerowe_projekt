@@ -88,9 +88,11 @@ class GameLogic:
         Args:
             state (str): The game state received from the server.
         """
+
         print(f"game state: {state}")
         state = state.replace("\x00", "")
         winner = int(state[0])
+
 
 
         number_of_players = int(state[1])
@@ -113,9 +115,11 @@ class GameLogic:
             self.gameState.players[i].card_face_up = int(state[index + 18 : index + 20])
             self.gameState.players[i].message = state[index + 20]
 
+
     
     def get_winner(self):
         return self.gameState.winner
+
 
     def mouse_handler(self, event):
         """
